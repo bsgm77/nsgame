@@ -27,7 +27,7 @@ class MainScene extends Phaser.Scene {
     this.physics.world.setBounds(0, 0, this.W, this.H);
 
     // 캐릭터 이름
-    this.characterName = 'Blue';
+    this.characterName = 'RACHEL'
     this.nameOffsetY = 45 * this.gameScale;
     this.hpBarOffsetY = 32 * this.gameScale;
     this.hpBarWidth = 44 * this.gameScale;
