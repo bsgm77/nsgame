@@ -10,23 +10,31 @@ class MainScene extends Phaser.Scene {
     this.W = this.scale.width;
     this.H = this.scale.height;
 
+    // 화면 크기에 따른 배율 (작은 화면일수록 캐릭터/몬스터를 더 작게)
+    this.gameScale = Phaser.Math.Clamp(Math.min(this.W, this.H) / 600, 0.4, 1);
+
     // 플레이어 (파란 사각형, 항상 화면 정중앙에서 시작)
-    this.player = this.add.rectangle(this.W / 2, this.H / 2, 40, 40, 0x3498db);
+    const playerSize = 40 * this.gameScale;
+    this.player = this.add.rectangle(this.W / 2, this.H / 2, playerSize, playerSize, 0x3498db);
     this.physics.add.existing(this.player);
     this.player.body.setCollideWorldBounds(true);
     this.physics.world.setBounds(0, 0, this.W, this.H);
 
     // 캐릭터 이름
     this.characterName = 'Blue';
+    this.nameOffsetY = 45 * this.gameScale;
+    this.hpBarOffsetY = 32 * this.gameScale;
+    this.hpBarWidth = 44 * this.gameScale;
+    this.hpBarHeight = 6 * this.gameScale;
 
-    this.nameTag = this.add.text(this.player.x, this.player.y - 45, this.characterName, {
-      fontSize: '13px',
+    this.nameTag = this.add.text(this.player.x, this.player.y - this.nameOffsetY, this.characterName, {
+      fontSize: `${Math.max(10, 13 * this.gameScale)}px`,
       color: '#ffffff'
     }).setOrigin(0.5);
 
     // 캐릭터 머리 위 체력바 (배경 + 채워지는 바)
-    this.headHpBarBg = this.add.rectangle(this.player.x, this.player.y - 32, 44, 6, 0x333333);
-    this.headHpBar = this.add.rectangle(this.player.x, this.player.y - 32, 44, 6, 0x2ecc71);
+    this.headHpBarBg = this.add.rectangle(this.player.x, this.player.y - this.hpBarOffsetY, this.hpBarWidth, this.hpBarHeight, 0x333333);
+    this.headHpBar = this.add.rectangle(this.player.x, this.player.y - this.hpBarOffsetY, this.hpBarWidth, this.hpBarHeight, 0x2ecc71);
 
     // 경험치 / 레벨 시스템
     this.exp = 0;
@@ -311,9 +319,10 @@ class MainScene extends Phaser.Scene {
     else if (edge === 2) { x = -20; y = Phaser.Math.Between(0, this.H); }
     else { x = this.W + 20; y = Phaser.Math.Between(0, this.H); }
 
-    const monster = this.add.rectangle(x, y, 30, 30, 0xe74c3c);
+    const monsterSize = 30 * this.gameScale;
+    const monster = this.add.rectangle(x, y, monsterSize, monsterSize, 0xe74c3c);
     this.physics.add.existing(monster);
-    monster.hp = 1 + (this.level - 1) * 0.2;
+    monster.hp = 1 + (this.level - 1) * 0.15;
     this.monsters.add(monster);
   }
 
@@ -327,10 +336,11 @@ class MainScene extends Phaser.Scene {
     else { x = this.W + 20; y = Phaser.Math.Between(0, this.H); }
 
     // 보라색 사각형 = 원거리 몬스터
-    const monster = this.add.rectangle(x, y, 30, 30, 0x9b59b6);
+    const monsterSize = 30 * this.gameScale;
+    const monster = this.add.rectangle(x, y, monsterSize, monsterSize, 0x9b59b6);
     this.physics.add.existing(monster);
     monster.isRanged = true;
-    monster.hp = 1 + (this.level - 1) * 0.2;
+    monster.hp = 1 + (this.level - 1) * 0.15;
     this.monsters.add(monster);
 
     // 3초마다 이 몬스터가 플레이어를 향해 탄환 발사
@@ -342,7 +352,8 @@ class MainScene extends Phaser.Scene {
           monster.shootTimer.remove();
           return;
         }
-        const enemyBullet = this.add.rectangle(monster.x, monster.y, 12, 12, 0xffffff);
+        const bulletSize = 12 * this.gameScale;
+        const enemyBullet = this.add.rectangle(monster.x, monster.y, bulletSize, bulletSize, 0xffffff);
         this.physics.add.existing(enemyBullet);
         this.enemyBullets.add(enemyBullet);
         this.physics.moveToObject(enemyBullet, this.player, 250);
@@ -390,7 +401,8 @@ class MainScene extends Phaser.Scene {
 
     // 탄환 개수만큼 발사 (기본 1개, 레벨업으로 늘어남)
     for (let i = 0; i < this.bulletCount; i++) {
-      const bullet = this.add.rectangle(this.player.x, this.player.y, 10, 10, 0xf1c40f);
+      const bulletSize = 10 * this.gameScale;
+      const bullet = this.add.rectangle(this.player.x, this.player.y, bulletSize, bulletSize, 0xf1c40f);
       this.physics.add.existing(bullet);
       bullet.pierce = this.bulletPierce;
       bullet.hitMonsters = []; // 이미 때린 몬스터 목록 (중복 타격 방지)
@@ -619,8 +631,8 @@ class MainScene extends Phaser.Scene {
     this.isDashing = true;
     this.isInvincible = true;
 
-    // 현재 움직이는 방향으로 빠르게 이동
-    const dashSpeed = 1500;
+    // 현재 움직이는 방향으로 빠르게 이동 (화면이 작을수록 상대적으로 더 멀리 대시)
+    const dashSpeed = 1500 / this.gameScale;
     let vx, vy;
 
     if (this.isMobile && this.joystickActive && (this.joystickDirX !== 0 || this.joystickDirY !== 0)) {
@@ -706,11 +718,12 @@ class MainScene extends Phaser.Scene {
     });
 
     // 이름표 / 머리 위 체력바가 캐릭터를 따라다니게 함
-    this.nameTag.setPosition(this.player.x, this.player.y - 45);
-    this.headHpBarBg.setPosition(this.player.x, this.player.y - 32);
-    this.headHpBar.setPosition(this.player.x - (22 - (22 * this.hp / this.maxHp)), this.player.y - 32);
-    this.headHpBar.width = 44 * (this.hp / this.maxHp);
-    
+    const halfBar = this.hpBarWidth / 2;
+    this.nameTag.setPosition(this.player.x, this.player.y - this.nameOffsetY);
+    this.headHpBarBg.setPosition(this.player.x, this.player.y - this.hpBarOffsetY);
+    this.headHpBar.setPosition(this.player.x - (halfBar - (halfBar * this.hp / this.maxHp)), this.player.y - this.hpBarOffsetY);
+    this.headHpBar.width = this.hpBarWidth * (this.hp / this.maxHp);
+
     // 화면 밖으로 나간 탄환 정리
     this.bullets.getChildren().forEach((b) => {
       if (b.x < -50 || b.x > this.W + 50 || b.y < -50 || b.y > this.H + 50) b.destroy();
