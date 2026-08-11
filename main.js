@@ -1,11 +1,5 @@
+
 import Phaser from 'phaser';
-
-class MainScene extends Phaser.Scene {
-  constructor() {
-    super('MainScene');
-  }
-
-  import Phaser from 'phaser';
 
 // 구매 가능한 캐릭터 목록
 const CHARACTERS = [
@@ -125,6 +119,11 @@ class ShopScene extends Phaser.Scene {
     backBtn.on('pointerdown', () => this.scene.start('MenuScene'));
   }
 }
+
+class MainScene extends Phaser.Scene {
+  constructor() {
+    super('MainScene');
+  }
 
   create() {
     // 현재 화면 크기 (모니터에 따라 다름)
