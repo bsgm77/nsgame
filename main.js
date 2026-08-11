@@ -144,7 +144,9 @@ class MainScene extends Phaser.Scene {
     // 모바일 여부 감지
     this.isMobile = this.sys.game.device.input.touch;
 
-    // 가상 조이스틱 상태
+    // 멀티터치(조이스틱 + 대시 동시 입력) 허용
+    this.input.addPointer(2);
+
     this.joystickActive = false;
     this.joystickStartX = 0;
     this.joystickStartY = 0;
@@ -219,6 +221,18 @@ class MainScene extends Phaser.Scene {
       if (this.dashButtonText) {
         this.dashButtonText.setPosition(this.W - 90, this.H - 90);
       }
+
+      // 플레이어가 화면 밖으로 나가지 않도록 위치 보정
+      if (this.player) {
+        this.player.x = Phaser.Math.Clamp(this.player.x, 20, this.W - 20);
+        this.player.y = Phaser.Math.Clamp(this.player.y, 20, this.H - 20);
+      }
+
+      // 레벨업 선택 화면이 떠 있는 상태로 회전했다면 다시 그리기
+      if (this.isChoosingUpgrade && this.upgradeUI) {
+        this.upgradeUI.forEach((el) => el.destroy());
+        this.showUpgradeChoicesLayout();
+      }
     });
   }
   
@@ -230,22 +244,24 @@ class MainScene extends Phaser.Scene {
       .setScrollFactor(0).setDepth(201).setVisible(false);
 
     // 대시 버튼 (오른쪽 하단)
-    const dashBtnX = this.W - 90;
-    const dashBtnY = this.H - 90;
-    this.dashButton = this.add.circle(dashBtnX, dashBtnY, 50, 0xf1c40f, 0.35)
+    this.dashButton = this.add.circle(this.W - 90, this.H - 90, 50, 0xf1c40f, 0.35)
       .setScrollFactor(0).setDepth(200).setInteractive();
-    this.dashButtonText = this.add.text(dashBtnX, dashBtnY, 'DASH', {
+    this.dashButtonText = this.add.text(this.W - 90, this.H - 90, 'DASH', {
       fontSize: '16px',
       color: '#ffffff',
       fontStyle: 'bold'
     }).setOrigin(0.5).setScrollFactor(0).setDepth(201);
+
     this.dashButton.on('pointerdown', () => {
       if (this.canDash) this.dash();
     });
 
-    // 화면 왼쪽 절반 터치 = 조이스틱 조작
+    // 조이스틱은 자신을 시작시킨 손가락(pointer id)만 추적해서, 대시 손가락과 안 섞이게 함
+    this.joystickPointerId = null;
+
     this.input.on('pointerdown', (pointer) => {
-      if (pointer.x < this.W / 2) {
+      if (pointer.x < this.W / 2 && this.joystickPointerId === null) {
+        this.joystickPointerId = pointer.id;
         this.joystickActive = true;
         this.joystickStartX = pointer.x;
         this.joystickStartY = pointer.y;
@@ -255,8 +271,7 @@ class MainScene extends Phaser.Scene {
     });
 
     this.input.on('pointermove', (pointer) => {
-      if (!this.joystickActive) return;
-      if (!pointer.isDown) return;
+      if (!this.joystickActive || pointer.id !== this.joystickPointerId) return;
 
       const dx = pointer.x - this.joystickStartX;
       const dy = pointer.y - this.joystickStartY;
@@ -273,7 +288,8 @@ class MainScene extends Phaser.Scene {
     });
 
     this.input.on('pointerup', (pointer) => {
-      if (pointer.x < this.W / 2) {
+      if (pointer.id === this.joystickPointerId) {
+        this.joystickPointerId = null;
         this.joystickActive = false;
         this.joystickDirX = 0;
         this.joystickDirY = 0;
@@ -453,54 +469,60 @@ class MainScene extends Phaser.Scene {
     this.physics.pause();
     this.time.paused = true;
 
-    this.upgradeUI = [];
-
-    // 어두운 반투명 배경
-    const overlay = this.add.rectangle(this.W / 2, this.H / 2, this.W, this.H, 0x000000, 0.75).setDepth(100);
-    this.upgradeUI.push(overlay);
-
-    // 상단 타이틀
-    const title = this.add.text(this.W / 2, 150, '레벨 업!', {
-      fontSize: '34px',
-      color: '#f1c40f',
-      fontStyle: 'bold',
-      padding: { top: 10, bottom: 10 }
-    }).setOrigin(0.5, 0.5).setDepth(100);
-    this.upgradeUI.push(title);
-
     // 이미 얻은 일회성 옵션(관통 등)은 제외하고 랜덤 3개 뽑기
     const availablePool = this.upgradeOptionsPool.filter((opt) => {
       if (opt.name === '관통 탄환' && this.bulletPierce) return false;
       return true;
     });
     const shuffled = Phaser.Utils.Array.Shuffle([...availablePool]);
-    const choices = shuffled.slice(0, 3);
+    this.currentUpgradeChoices = shuffled.slice(0, 3);
 
-    const cardWidth = 190;
-    const cardHeight = 260;
-    const gap = 24;
+    this.showUpgradeChoicesLayout();
+  }
+
+  showUpgradeChoicesLayout() {
+    this.upgradeUI = [];
+
+    // 화면 크기에 맞춰 카드 크기를 항상 비례해서 계산 (고정값 대신 비율 기반)
+    const titleY = Math.max(24, this.H * 0.1);
+    const availableHeight = this.H - titleY - 40; // 타이틀과 하단 여백 뺀 나머지
+    const cardHeight = Math.min(260, availableHeight);
+    const cardWidth = Math.min(190, this.W / 3 - 30, cardHeight * 0.75);
+    const cardY = titleY + 30 + cardHeight / 2;
+    const compact = cardWidth < 160;
+    
+    // 어두운 반투명 배경
+    const overlay = this.add.rectangle(this.W / 2, this.H / 2, this.W, this.H, 0x000000, 0.75).setDepth(100);
+    this.upgradeUI.push(overlay);
+
+    // 상단 타이틀
+    const title = this.add.text(this.W / 2, titleY, '레벨 업!', {
+      fontSize: compact ? '20px' : '34px',
+      color: '#f1c40f',
+      fontStyle: 'bold',
+      padding: { top: 10, bottom: 10 }
+    }).setOrigin(0.5, 0.5).setDepth(100);
+    this.upgradeUI.push(title);
+
+    const gap = 20;
     const totalWidth = cardWidth * 3 + gap * 2;
     const startX = this.W / 2 - totalWidth / 2 + cardWidth / 2;
-    const cardY = 360;
 
-    choices.forEach((choice, i) => {
+    this.currentUpgradeChoices.forEach((choice, i) => {
       const x = startX + i * (cardWidth + gap);
 
-      // 카드 배경 (테두리 있는 사각형)
       const card = this.add.rectangle(x, cardY, cardWidth, cardHeight, 0x1b2838)
         .setStrokeStyle(3, 0x3a5068)
         .setDepth(100)
         .setInteractive({ useHandCursor: true });
       this.upgradeUI.push(card);
 
-      // 아이콘 자리 (원형으로 색만 표시, 나중에 이미지로 교체 가능)
-      const icon = this.add.circle(x, cardY - 75, 32, choice.color || 0x3498db)
+      const icon = this.add.circle(x, cardY - cardHeight / 2 + 40, compact ? 18 : 32, choice.color || 0x3498db)
         .setDepth(101);
       this.upgradeUI.push(icon);
 
-      // 이름
-      const nameText = this.add.text(x, cardY - 10, choice.name, {
-        fontSize: '18px',
+      const nameText = this.add.text(x, cardY - cardHeight / 2 + 40 + (compact ? 30 : 65), choice.name, {
+        fontSize: compact ? '12px' : '18px',
         color: '#ffffff',
         fontStyle: 'bold',
         align: 'center',
@@ -508,16 +530,14 @@ class MainScene extends Phaser.Scene {
       }).setOrigin(0.5).setDepth(101);
       this.upgradeUI.push(nameText);
 
-      // 설명
-      const descText = this.add.text(x, cardY + 55, choice.desc, {
-        fontSize: '13px',
+      const descText = this.add.text(x, cardY + cardHeight / 2 - (compact ? 26 : 55), choice.desc, {
+        fontSize: compact ? '9px' : '13px',
         color: '#9fb3c8',
         align: 'center',
         wordWrap: { width: cardWidth - 24 }
       }).setOrigin(0.5).setDepth(101);
       this.upgradeUI.push(descText);
 
-      // 호버 / 클릭 효과
       card.on('pointerover', () => {
         card.setStrokeStyle(3, 0xf1c40f);
         card.setFillStyle(0x24344a);
