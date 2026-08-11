@@ -22,6 +22,7 @@ class MainScene extends Phaser.Scene {
     const playerSize = 40 * this.gameScale;
     this.player = this.add.image(this.W / 2, this.H / 2, 'player_char');
     this.player.setDisplaySize(playerSize, playerSize);
+    this.physics.add.existing(this.player);
     this.player.body.setCollideWorldBounds(true);
     this.physics.world.setBounds(0, 0, this.W, this.H);
 
