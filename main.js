@@ -736,13 +736,12 @@ const config = {
   width: window.innerWidth,
   height: window.innerHeight,
   backgroundColor: '#1a1a2e',
-  input: {
-    activePointers: 3
-  },
-  resolution: window.devicePixelRatio || 1,
+  resolution: Math.min(window.devicePixelRatio || 1, 3),
   render: {
     antialias: true,
-    roundPixels: false
+    antialiasGL: true,
+    roundPixels: false,
+    pixelArt: false
   },
   scale: {
     mode: Phaser.Scale.RESIZE,
