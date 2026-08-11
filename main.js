@@ -11,7 +11,14 @@ class MainScene extends Phaser.Scene {
     this.H = this.scale.height;
 
     // 화면 크기에 따른 배율 (작은 화면일수록 캐릭터/몬스터를 더 작게)
-    this.gameScale = Phaser.Math.Clamp(Math.min(this.W, this.H) /900, 0.35, 1);
+    this.gameScale = Phaser.Math.Clamp(Math.min(this.W, this.H) / 900, 0.35, 1);
+
+    // 디버깅용: 계산값 화면에 표시 (확인 후 삭제 예정)
+    this.add.text(10, 100, `W:${Math.round(this.W)} H:${Math.round(this.H)} scale:${this.gameScale.toFixed(2)}`, {
+      fontSize: '16px',
+      color: '#00ff00',
+      backgroundColor: '#000000'
+    }).setDepth(300);
 
     // 플레이어 (파란 사각형, 항상 화면 정중앙에서 시작)
     const playerSize = 40 * this.gameScale;
