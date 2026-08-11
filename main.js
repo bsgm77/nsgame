@@ -23,6 +23,12 @@ class MainScene extends Phaser.Scene {
     this.player = this.add.image(this.W / 2, this.H / 2, 'player_char');
     this.player.setDisplaySize(playerSize, playerSize);
     this.physics.add.existing(this.player);
+
+    // 물리 충돌 범위를 실제 이미지 원본 크기 기준으로, 보이는 크기에 맞게 재조정
+    const hitboxScale = playerSize / this.player.width;
+    this.player.body.setSize(this.player.width, this.player.height);
+    this.player.body.setOffset(0, 0);
+
     this.player.body.setCollideWorldBounds(true);
     this.physics.world.setBounds(0, 0, this.W, this.H);
 
