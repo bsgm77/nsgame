@@ -5,6 +5,14 @@ class MainScene extends Phaser.Scene {
     super('MainScene');
   }
 
+  constructor() {
+    super('MainScene');
+  }
+
+  preload() {
+    this.load.image('player_char', 'assets/REA.png');
+  }
+
   create() {
     // 현재 화면 크기 (모니터에 따라 다름)
     this.W = this.scale.width;
@@ -13,10 +21,10 @@ class MainScene extends Phaser.Scene {
     // 화면 크기에 따른 배율 (작은 화면일수록 캐릭터/몬스터를 더 작게)
     this.gameScale = Phaser.Math.Clamp(Math.min(this.W, this.H) / 900, 0.4, 1);
 
-    // 플레이어 (파란 사각형, 항상 화면 정중앙에서 시작)
+    // 플레이어 (이미지, 항상 화면 정중앙에서 시작)
     const playerSize = 40 * this.gameScale;
-    this.player = this.add.rectangle(this.W / 2, this.H / 2, playerSize, playerSize, 0x3498db);
-    this.physics.add.existing(this.player);
+    this.player = this.add.image(this.W / 2, this.H / 2, 'player_char');
+    this.player.setDisplaySize(playerSize, playerSize);
     this.player.body.setCollideWorldBounds(true);
     this.physics.world.setBounds(0, 0, this.W, this.H);
 
