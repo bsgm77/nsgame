@@ -216,6 +216,9 @@ class MainScene extends Phaser.Scene {
       if (this.dashButton) {
         this.dashButton.setPosition(this.W - 90, this.H - 90);
       }
+      if (this.dashButtonText) {
+        this.dashButtonText.setPosition(this.W - 90, this.H - 90);
+      }
     });
   }
   
@@ -231,12 +234,11 @@ class MainScene extends Phaser.Scene {
     const dashBtnY = this.H - 90;
     this.dashButton = this.add.circle(dashBtnX, dashBtnY, 50, 0xf1c40f, 0.35)
       .setScrollFactor(0).setDepth(200).setInteractive();
-    this.add.text(dashBtnX, dashBtnY, 'DASH', {
+    this.dashButtonText = this.add.text(dashBtnX, dashBtnY, 'DASH', {
       fontSize: '16px',
       color: '#ffffff',
       fontStyle: 'bold'
     }).setOrigin(0.5).setScrollFactor(0).setDepth(201);
-
     this.dashButton.on('pointerdown', () => {
       if (this.canDash) this.dash();
     });
@@ -698,6 +700,9 @@ const config = {
   width: window.innerWidth,
   height: window.innerHeight,
   backgroundColor: '#1a1a2e',
+  input: {
+    activePointers: 3
+  },
   resolution: window.devicePixelRatio || 1,
   render: {
     antialias: true,
@@ -723,3 +728,14 @@ if (import.meta.hot) {
     game.destroy(true);
   });
 }
+
+// 화면 회전 시, 약간의 지연 후 크기를 다시 계산 (모바일 브라우저 주소창 변화 대응)
+window.addEventListener('orientationchange', () => {
+  setTimeout(() => {
+    game.scale.resize(window.innerWidth, window.innerHeight);
+  }, 300);
+});
+
+window.addEventListener('resize', () => {
+  game.scale.resize(window.innerWidth, window.innerHeight);
+});
