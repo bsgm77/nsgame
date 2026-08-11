@@ -13,13 +13,6 @@ class MainScene extends Phaser.Scene {
     // 화면 크기에 따른 배율 (작은 화면일수록 캐릭터/몬스터를 더 작게)
     this.gameScale = Phaser.Math.Clamp(Math.min(this.W, this.H) / 900, 0.4, 1);
 
-    // 디버깅용: 계산값 화면에 표시 (확인 후 삭제 예정)
-    this.debugText = this.add.text(10, 100, '', {
-      fontSize: '16px',
-      color: '#00ff00',
-      backgroundColor: '#000000'
-    }).setDepth(300);
-
     // 플레이어 (파란 사각형, 항상 화면 정중앙에서 시작)
     const playerSize = 40 * this.gameScale;
     this.player = this.add.rectangle(this.W / 2, this.H / 2, playerSize, playerSize, 0x3498db);
@@ -697,10 +690,6 @@ class MainScene extends Phaser.Scene {
     const realH = window.innerHeight;
     if (Math.abs(this.W - realW) > 5 || Math.abs(this.H - realH) > 5) {
       this.scale.resize(realW, realH);
-    }
-
-    if (this.debugText) {
-      this.debugText.setText(`W:${Math.round(this.W)} H:${Math.round(this.H)} scale:${this.gameScale.toFixed(2)}`);
     }
 
     // 생존 시간 갱신
