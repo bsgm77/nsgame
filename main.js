@@ -801,3 +801,15 @@ document.getElementById('game-container').addEventListener(
   },
   { once: true }
 );
+
+// 전체화면 전환이 실제로 완료된 직후, 화면 크기를 다시 정확히 계산
+document.addEventListener('fullscreenchange', () => {
+  setTimeout(() => {
+    game.scale.resize(window.innerWidth, window.innerHeight);
+  }, 200);
+});
+document.addEventListener('webkitfullscreenchange', () => {
+  setTimeout(() => {
+    game.scale.resize(window.innerWidth, window.innerHeight);
+  }, 200);
+});
