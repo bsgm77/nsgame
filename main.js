@@ -686,6 +686,13 @@ class MainScene extends Phaser.Scene {
   update(time, delta) {
     if (this.isGameOver || this.isChoosingUpgrade) return;
 
+    // 실제 화면 크기와 게임 내부 크기가 어긋나 있으면 강제로 재조정
+    const realW = window.innerWidth;
+    const realH = window.innerHeight;
+    if (Math.abs(this.W - realW) > 5 || Math.abs(this.H - realH) > 5) {
+      this.scale.resize(realW, realH);
+    }
+    
     // 생존 시간 갱신
     this.survivalTime += delta / 1000;
     const minutes = Math.floor(this.survivalTime / 60);
