@@ -234,6 +234,14 @@ class MainScene extends Phaser.Scene {
         this.showUpgradeChoicesLayout();
       }
     });
+
+    // 모바일에서 첫 화면 터치 시 자동으로 전체화면 전환
+    if (this.isMobile && !this.scale.isFullscreen) {
+      this.input.once('pointerdown', () => {
+        this.scale.startFullscreen();
+      });
+    }
+
   }
   
   createMobileControls() {
@@ -490,7 +498,7 @@ class MainScene extends Phaser.Scene {
     const cardWidth = Math.min(190, this.W / 3 - 30, cardHeight * 0.75);
     const cardY = titleY + 30 + cardHeight / 2;
     const compact = cardWidth < 160;
-    
+
     // 어두운 반투명 배경
     const overlay = this.add.rectangle(this.W / 2, this.H / 2, this.W, this.H, 0x000000, 0.75).setDepth(100);
     this.upgradeUI.push(overlay);
