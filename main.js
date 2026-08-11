@@ -1,124 +1,4 @@
-
 import Phaser from 'phaser';
-
-// 구매 가능한 캐릭터 목록
-const CHARACTERS = [
-  { id: 'blue', name: 'Blue', color: 0x3498db, price: 0 },
-  { id: 'red', name: 'Crimson', color: 0xe74c3c, price: 500 },
-  { id: 'green', name: 'Jade', color: 0x2ecc71, price: 1000 },
-];
-
-function loadCurrency() {
-  return parseInt(localStorage.getItem('ns_currency') || '0', 10);
-}
-function saveCurrency(v) {
-  localStorage.setItem('ns_currency', String(v));
-}
-function loadOwned() {
-  const raw = localStorage.getItem('ns_owned_characters');
-  return raw ? JSON.parse(raw) : ['blue'];
-}
-function saveOwned(arr) {
-  localStorage.setItem('ns_owned_characters', JSON.stringify(arr));
-}
-function loadSelected() {
-  return localStorage.getItem('ns_selected_character') || 'blue';
-}
-function saveSelected(id) {
-  localStorage.setItem('ns_selected_character', id);
-}
-
-// 메인 메뉴 화면
-class MenuScene extends Phaser.Scene {
-  constructor() { super('MenuScene'); }
-  create() {
-    this.W = this.scale.width;
-    this.H = this.scale.height;
-    this.cameras.main.setBackgroundColor('#1a1a2e');
-
-    this.add.text(this.W / 2, this.H * 0.25, '자캐 서바이벌', {
-      fontSize: '36px', color: '#ffffff', fontStyle: 'bold'
-    }).setOrigin(0.5);
-
-    this.add.text(this.W / 2, this.H * 0.35, `보유 코인: ${loadCurrency()}`, {
-      fontSize: '20px', color: '#f1c40f'
-    }).setOrigin(0.5);
-
-    const playBtn = this.add.rectangle(this.W / 2, this.H * 0.5, 200, 60, 0x2ecc71).setInteractive({ useHandCursor: true });
-    this.add.text(this.W / 2, this.H * 0.5, 'PLAY', { fontSize: '22px', color: '#fff', fontStyle: 'bold' }).setOrigin(0.5);
-    playBtn.on('pointerdown', () => this.scene.start('MainScene'));
-
-    const shopBtn = this.add.rectangle(this.W / 2, this.H * 0.62, 200, 60, 0x3498db).setInteractive({ useHandCursor: true });
-    this.add.text(this.W / 2, this.H * 0.62, 'SHOP', { fontSize: '22px', color: '#fff', fontStyle: 'bold' }).setOrigin(0.5);
-    shopBtn.on('pointerdown', () => this.scene.start('ShopScene'));
-
-    this.scale.on('resize', () => this.scene.restart());
-  }
-}
-
-// 상점 화면
-class ShopScene extends Phaser.Scene {
-  constructor() { super('ShopScene'); }
-  create() {
-    this.W = this.scale.width;
-    this.H = this.scale.height;
-    this.cameras.main.setBackgroundColor('#1a1a2e');
-
-    this.add.text(this.W / 2, 40, '캐릭터 상점', {
-      fontSize: '28px', color: '#f1c40f', fontStyle: 'bold'
-    }).setOrigin(0.5);
-
-    this.add.text(this.W / 2, 80, `보유 코인: ${loadCurrency()}`, {
-      fontSize: '18px', color: '#ffffff'
-    }).setOrigin(0.5);
-
-    const owned = loadOwned();
-    const selected = loadSelected();
-
-    const cardW = 160, cardH = 200, gap = 20;
-    const totalW = CHARACTERS.length * cardW + (CHARACTERS.length - 1) * gap;
-    const startX = this.W / 2 - totalW / 2 + cardW / 2;
-
-    CHARACTERS.forEach((ch, i) => {
-      const x = startX + i * (cardW + gap);
-      const y = this.H / 2;
-
-      this.add.rectangle(x, y, cardW, cardH, 0x1b2838).setStrokeStyle(3, 0x3a5068);
-      this.add.rectangle(x, y - 40, 40, 40, ch.color);
-      this.add.text(x, y + 10, ch.name, { fontSize: '16px', color: '#fff', fontStyle: 'bold' }).setOrigin(0.5);
-
-      const isOwned = owned.includes(ch.id);
-      const isSelected = selected === ch.id;
-
-      let label, btnColor;
-      if (isSelected) { label = '선택됨'; btnColor = 0x27ae60; }
-      else if (isOwned) { label = '선택하기'; btnColor = 0x2980b9; }
-      else { label = `${ch.price} 코인`; btnColor = 0xe67e22; }
-
-      const btn = this.add.rectangle(x, y + 60, 120, 36, btnColor).setInteractive({ useHandCursor: true });
-      this.add.text(x, y + 60, label, { fontSize: '13px', color: '#fff' }).setOrigin(0.5);
-
-      btn.on('pointerdown', () => {
-        const curOwned = loadOwned();
-        const curCurrency = loadCurrency();
-        if (curOwned.includes(ch.id)) {
-          saveSelected(ch.id);
-          this.scene.restart();
-        } else if (curCurrency >= ch.price) {
-          saveCurrency(curCurrency - ch.price);
-          curOwned.push(ch.id);
-          saveOwned(curOwned);
-          saveSelected(ch.id);
-          this.scene.restart();
-        }
-      });
-    });
-
-    const backBtn = this.add.rectangle(60, this.H - 40, 100, 44, 0x555555).setInteractive({ useHandCursor: true });
-    this.add.text(60, this.H - 40, '뒤로', { fontSize: '16px', color: '#fff' }).setOrigin(0.5);
-    backBtn.on('pointerdown', () => this.scene.start('MenuScene'));
-  }
-}
 
 class MainScene extends Phaser.Scene {
   constructor() {
@@ -133,18 +13,15 @@ class MainScene extends Phaser.Scene {
     // 화면 크기에 따른 배율 (작은 화면일수록 캐릭터/몬스터를 더 작게)
     this.gameScale = Phaser.Math.Clamp(Math.min(this.W, this.H) / 900, 0.4, 1);
 
-    // 선택된 캐릭터 정보 불러오기
-    const selectedId = loadSelected();
-    const selectedChar = CHARACTERS.find(c => c.id === selectedId) || CHARACTERS[0];
-
-    // 플레이어 (선택한 캐릭터 색상, 항상 화면 정중앙에서 시작)
+    // 플레이어 (파란 사각형, 항상 화면 정중앙에서 시작)
     const playerSize = 40 * this.gameScale;
-    this.player = this.add.rectangle(this.W / 2, this.H / 2, playerSize, playerSize, selectedChar.color);
+    this.player = this.add.rectangle(this.W / 2, this.H / 2, playerSize, playerSize, 0x3498db);
+    this.physics.add.existing(this.player);
     this.player.body.setCollideWorldBounds(true);
     this.physics.world.setBounds(0, 0, this.W, this.H);
 
-    // 캐릭터 이름 (선택한 캐릭터 이름 사용)
-    this.characterName = selectedChar.name;
+    // 캐릭터 이름
+    this.characterName = 'Blue';
     this.nameOffsetY = 45 * this.gameScale;
     this.hpBarOffsetY = 32 * this.gameScale;
     this.hpBarWidth = 44 * this.gameScale;
@@ -755,28 +632,10 @@ class MainScene extends Phaser.Scene {
   gameOver() {
     this.isGameOver = true;
     this.physics.pause();
-
-    // 화폐 보상 계산 및 지급 (생존시간 + 점수 기반)
-    const earned = Math.floor(this.survivalTime) + Math.floor(this.score / 10);
-    saveCurrency(loadCurrency() + earned);
-
-    this.add.text(this.W / 2, this.H / 2 - 60, 'YOU DIED', {
-      fontSize: '48px',
+    this.add.text(this.W / 2, this.H / 2, 'YOU DIED', {
+      fontSize: '60px',
       color: '#ff0000'
     }).setOrigin(0.5);
-
-    this.add.text(this.W / 2, this.H / 2, `획득 코인: +${earned}`, {
-      fontSize: '22px',
-      color: '#f1c40f'
-    }).setOrigin(0.5);
-
-    const menuBtn = this.add.rectangle(this.W / 2, this.H / 2 + 60, 180, 50, 0x2ecc71).setInteractive({ useHandCursor: true });
-    this.add.text(this.W / 2, this.H / 2 + 60, '메인으로', {
-      fontSize: '18px',
-      color: '#ffffff',
-      fontStyle: 'bold'
-    }).setOrigin(0.5);
-    menuBtn.on('pointerdown', () => this.scene.start('MenuScene'));
   }
 
   dash() {
@@ -912,7 +771,7 @@ const config = {
     default: 'arcade',
     arcade: { gravity: { y: 0 }, debug: false }
   },
-  scene: [MenuScene, ShopScene, MainScene]
+  scene: MainScene
 };
 
 const game = new Phaser.Game(config);
