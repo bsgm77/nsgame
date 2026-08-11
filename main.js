@@ -14,7 +14,7 @@ class MainScene extends Phaser.Scene {
     this.gameScale = Phaser.Math.Clamp(Math.min(this.W, this.H) / 900, 0.4, 1);
 
     // 디버깅용: 계산값 화면에 표시 (확인 후 삭제 예정)
-    this.add.text(10, 100, `W:${Math.round(this.W)} H:${Math.round(this.H)} scale:${this.gameScale.toFixed(2)}`, {
+    this.debugText = this.add.text(10, 100, '', {
       fontSize: '16px',
       color: '#00ff00',
       backgroundColor: '#000000'
@@ -229,9 +229,9 @@ class MainScene extends Phaser.Scene {
     this.scale.on('resize', (gameSize) => {
       this.W = gameSize.width;
       this.H = gameSize.height;
+      this.gameScale = Phaser.Math.Clamp(Math.min(this.W, this.H) / 900, 0.5, 1);
 
       this.physics.world.setBounds(0, 0, this.W, this.H);
-
       if (this.timerText) this.timerText.setX(this.W / 2);
       if (this.scoreText) this.scoreText.setX(this.W / 2);
 
@@ -253,8 +253,14 @@ class MainScene extends Phaser.Scene {
         this.upgradeUI.forEach((el) => el.destroy());
         this.showUpgradeChoicesLayout();
       }
-    });
 
+      // 플레이어 크기도 새 배율에 맞게 즉시 조정
+      if (this.player) {
+        const newSize = 40 * this.gameScale;
+        this.player.setSize(newSize, newSize);
+        if (this.player.body) this.player.body.setSize(newSize, newSize);
+      }
+    });
     
 
   }
@@ -692,7 +698,11 @@ class MainScene extends Phaser.Scene {
     if (Math.abs(this.W - realW) > 5 || Math.abs(this.H - realH) > 5) {
       this.scale.resize(realW, realH);
     }
-    
+
+    if (this.debugText) {
+      this.debugText.setText(`W:${Math.round(this.W)} H:${Math.round(this.H)} scale:${this.gameScale.toFixed(2)}`);
+    }
+
     // 생존 시간 갱신
     this.survivalTime += delta / 1000;
     const minutes = Math.floor(this.survivalTime / 60);
