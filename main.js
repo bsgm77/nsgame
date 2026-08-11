@@ -29,7 +29,8 @@ class MainScene extends Phaser.Scene {
 
     this.nameTag = this.add.text(this.player.x, this.player.y - this.nameOffsetY, this.characterName, {
       fontSize: `${Math.max(10, 13 * this.gameScale)}px`,
-      color: '#ffffff'
+      color: '#ffffff',
+      resolution: 2
     }).setOrigin(0.5);
 
     // 캐릭터 머리 위 체력바 (배경 + 채워지는 바)
@@ -43,7 +44,8 @@ class MainScene extends Phaser.Scene {
 
     this.expText = this.add.text(16, 16, 'Lv.1  EXP: 0/5', {
       fontSize: '20px',
-      color: '#ffffff'
+      color: '#ffffff',
+      resolution: 2
     });
 
     // 플레이어 스탯 (레벨업으로 강화됨)
@@ -123,6 +125,7 @@ class MainScene extends Phaser.Scene {
 
     this.hpText = this.add.text(16, 44, 'HP: 100/100', {
       fontSize: '20px',
+      resolution: 2,
       color: '#2ecc71'
     });
 
@@ -132,11 +135,13 @@ class MainScene extends Phaser.Scene {
 
     this.timerText = this.add.text(this.W / 2, 16, '00:00', {
       fontSize: '26px',
+      resolution: 2,
       color: '#ffffff'
     }).setOrigin(0.5, 0);
 
     this.scoreText = this.add.text(this.W / 2, 48, 'SCORE: 0', {
       fontSize: '16px',
+      resolution: 2,
       color: '#f1c40f'
     }).setOrigin(0.5, 0);
 
@@ -260,7 +265,8 @@ class MainScene extends Phaser.Scene {
     this.dashButtonText = this.add.text(this.W - 90, this.H - 90, 'DASH', {
       fontSize: '16px',
       color: '#ffffff',
-      fontStyle: 'bold'
+      fontStyle: 'bold',
+      resolution: 2
     }).setOrigin(0.5).setScrollFactor(0).setDepth(201);
 
     this.dashButton.on('pointerdown', () => {
@@ -401,7 +407,7 @@ class MainScene extends Phaser.Scene {
 
     // 탄환 개수만큼 발사 (기본 1개, 레벨업으로 늘어남)
     for (let i = 0; i < this.bulletCount; i++) {
-      const bulletSize = 10 * this.gameScale;
+      const bulletSize = 12 * this.gameScale;
       const bullet = this.add.rectangle(this.player.x, this.player.y, bulletSize, bulletSize, 0xf1c40f);
       this.physics.add.existing(bullet);
       bullet.pierce = this.bulletPierce;
