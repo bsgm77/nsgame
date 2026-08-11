@@ -235,12 +235,7 @@ class MainScene extends Phaser.Scene {
       }
     });
 
-    // 모바일에서 첫 화면 터치 시 자동으로 전체화면 전환
-    if (this.isMobile && !this.scale.isFullscreen) {
-      this.input.once('pointerdown', () => {
-        this.scale.startFullscreen();
-      });
-    }
+    
 
   }
   
@@ -767,3 +762,22 @@ window.addEventListener('orientationchange', () => {
 window.addEventListener('resize', () => {
   game.scale.resize(window.innerWidth, window.innerHeight);
 });
+
+// 모바일에서 화면을 처음 터치하는 즉시 전체화면 전환 (브라우저 이벤트에 직접 연결)
+function requestGameFullscreen() {
+  const el = document.getElementById('game-container');
+  if (el.requestFullscreen) {
+    el.requestFullscreen().catch(() => {});
+  } else if (el.webkitRequestFullscreen) {
+    el.webkitRequestFullscreen();
+  }
+}
+
+document.getElementById('game-container').addEventListener(
+  'touchend',
+  function once() {
+    requestGameFullscreen();
+    document.getElementById('game-container').removeEventListener('touchend', once);
+  },
+  { once: true }
+);
