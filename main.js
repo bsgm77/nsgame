@@ -5,9 +5,6 @@ class MainScene extends Phaser.Scene {
     super('MainScene');
   }
 
-  constructor() {
-    super('MainScene');
-  }
 
   preload() {
     this.load.image('player_char', 'assets/REA.png');
